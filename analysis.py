@@ -1,0 +1,67 @@
+import pandas as pd
+from fpdf import FPDF
+import matplotlib.pyplot as plt
+data=pd.read_csv("expenses.csv",parse_dates=["Date"])
+print("data:\n",data)
+catagory_total=data.groupby("Category")["Amount"].sum()
+print("\nspending by catagory:\n",catagory_total)
+daily_total=data.groupby("Date")['Amount'].sum()
+print("\ndaily expense\n",daily_total)
+max_day=daily_total.idxmax()
+print(f"\nHighest spending day:{max_day.date()}-RS-{daily_total[max_day]}")
+avg_spending=daily_total.mean()
+print(f'avg daily spending:RS-{avg_spending:.2f}')
+catagory_total.plot(kind='bar',title='total spending by catagory',color='red')
+plt.ylabel('Amount')
+plt.tight_layout()
+
+plt.savefig("catagory_total.png") 
+plt.close()
+daily_total.plot(kind='line',marker='o',title='daily sending over time',color='teal')
+plt.ylabel('Amount')
+plt.xlabel('Date')
+plt.tight_layout()
+
+plt.savefig("daily_total.png") 
+plt.close()
+max_category = catagory_total.idxmax()
+max_category_amount = catagory_total[max_category]
+
+##pdf
+pdf=FPDF()
+pdf.add_page()
+pdf.set_font("Arial",'B',16)
+pdf.cell(200,10,'expense analysis report',ln=True,align='C')
+pdf.ln(10)
+##total spending
+pdf.set_font('Arial','B',16)
+pdf.cell(200,10,'total spending by category:',ln=True)
+pdf.set_font('Arial',size=12)
+for catagory,amount in catagory_total.items():
+    pdf.cell(200,10,f"{catagory:} Rs.{amount}",ln=True)
+pdf.ln(5)
+##highest spending
+pdf.set_font('Arial','B',12)
+pdf.cell(200,10,'highest spending:',ln=True)
+pdf.set_font('Arial','B',12)
+pdf.cell(200,10,f"{max_day.date()}-Rs.{daily_total[max_day]}",ln=True)
+pdf.ln(5)
+##avg spending
+pdf.set_font("Arial", 'B', 12)
+pdf.cell(200, 10, "Average Daily Spending:", ln=True)
+pdf.set_font("Arial", size=12)
+pdf.cell(200, 10, f"Rs.{avg_spending:.2f}", ln=True)
+pdf.ln(10)
+pdf.set_font("Arial", 'B', 12)
+pdf.cell(200, 10, "Charts:", ln=True)
+pdf.image("catagory_total.png", x=10, y=pdf.get_y(), w=180)
+pdf.ln(85)
+pdf.image("daily_total.png", x=10, y=pdf.get_y(), w=180)
+pdf.ln(85)
+pdf.output("expense_analysis_report.pdf")
+print("PDF report saved as 'expense_analysis_report.pdf'")
+pdf.set_font("Arial", 'B', 12)
+pdf.cell(200, 10, "Summary:", ln=True)
+pdf.set_font("Arial", size=12)
+pdf.cell(200, 10, f"Highest Spending Category: {max_category} — Rs.{max_category_amount}", ln=True)
+pdf.ln(10)
